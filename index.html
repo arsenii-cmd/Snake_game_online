@@ -846,6 +846,33 @@
     .pause-btn:active {
       transform: scale(0.95);
     }
+    /* Стили для кнопки полноэкранного режима */
+    .fullscreen-btn {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 2px solid rgba(124, 77, 255, 0.5);
+      border-radius: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 15;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+      display: none;
+      font-size: 20px;
+      color: white;
+      user-select: none;
+    }
+    .fullscreen-btn:hover {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(124, 77, 255, 0.8);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(124, 77, 255, 0.6);
+    }
+    .fullscreen-btn:active {
+      transform: scale(0.95);
+    }
     /* Меню паузы */
     .pause-menu {
       position: absolute;
@@ -938,6 +965,7 @@
   <h1>Змейка — до 8 участников</h1>
   <div class="mode-indicator" id="mode-indicator"></div>
   <button class="pause-btn" id="pause-btn">⏸</button>
+  <button class="fullscreen-btn" id="fullscreen-btn">⛶</button>
   <div id="setup-screen">
     <h2>Настройте игру</h2>
     <div class="selection-row">
@@ -1023,6 +1051,9 @@
     <div class="instructions">
       <p>До 8 змеек могут соревноваться одновременно!</p>
       <p>Управление: клавиатура или свайпы на экране</p>
+      <p style="margin-top: 8px; font-size: 13px; color: #adb5bd;">
+        Пауза: <kbd>Esc</kbd> / <kbd>ё</kbd> / <kbd>`</kbd> • Полный экран: <kbd>C</kbd>
+      </p>
       <p class="ghost-info" style="margin-top: 10px; font-style: italic; color: #ff9e6d;">
         В режимах "Призрак" и "Магический шутер" могут быть специальные механики
       </p>
@@ -1085,9 +1116,9 @@
       </div>
     </div>
     <div class="control-preview">
-      <div><kbd>Ц</kbd><kbd>Ф</kbd><kbd>Ы</kbd><kbd>В</kbd></div>
-      <div><kbd>Н</kbd><kbd>П</kbd><kbd>Р</kbd><kbd>О</kbd></div>
-      <div><kbd>З</kbd><kbd>Д</kbd><kbd>Ж</kbd><kbd>Э</kbd></div>
+      <div><kbd>Ц</kbd><kbd>Ф</kbd><kbd>Ы</kbd><kbd>В</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+      <div><kbd>Н</kbd><kbd>П</kbd><kbd>Р</kbd><kbd>О</kbd> / <kbd>Y</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd></div>
+      <div><kbd>З</kbd><kbd>Д</kbd><kbd>Ж</kbd><kbd>Э</kbd> / <kbd>P</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></div>
       <div><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div>
     </div>
     <button id="start-btn"><span>Начать игру</span></button>
@@ -1136,6 +1167,7 @@
   const pauseMenu = document.getElementById('pause-menu');
   const resumeBtn = document.getElementById('resume-btn');
   const mainMenuBtn = document.getElementById('main-menu-btn');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
 
   const gridSize = 20;
   const tileCountX = 60; // 1200 / 20
@@ -2572,20 +2604,38 @@
       let dir = null;
 
       if (control === 'keyboard1') {
+        // Русские клавиши ЦФЫВ
         if (e.key === 'ц' || e.key === 'Ц') dir = { x: 0, y: -1 };
         else if (e.key === 'ы' || e.key === 'Ы') dir = { x: 0, y: 1 };
         else if (e.key === 'ф' || e.key === 'Ф') dir = { x: -1, y: 0 };
         else if (e.key === 'в' || e.key === 'В') dir = { x: 1, y: 0 };
+        // Английские клавиши WASD
+        else if (e.key === 'w' || e.key === 'W') dir = { x: 0, y: -1 };
+        else if (e.key === 's' || e.key === 'S') dir = { x: 0, y: 1 };
+        else if (e.key === 'a' || e.key === 'A') dir = { x: -1, y: 0 };
+        else if (e.key === 'd' || e.key === 'D') dir = { x: 1, y: 0 };
       } else if (control === 'keyboard2') {
+        // Русские клавиши НПРО
         if (e.key === 'н' || e.key === 'Н') dir = { x: 0, y: -1 };
         else if (e.key === 'р' || e.key === 'Р') dir = { x: 0, y: 1 };
         else if (e.key === 'п' || e.key === 'П') dir = { x: -1, y: 0 };
         else if (e.key === 'о' || e.key === 'О') dir = { x: 1, y: 0 };
+        // Английские клавиши YGHJ
+        else if (e.key === 'y' || e.key === 'Y') dir = { x: 0, y: -1 };
+        else if (e.key === 'h' || e.key === 'H') dir = { x: 0, y: 1 };
+        else if (e.key === 'g' || e.key === 'G') dir = { x: -1, y: 0 };
+        else if (e.key === 'j' || e.key === 'J') dir = { x: 1, y: 0 };
       } else if (control === 'keyboard3') {
+        // Русские клавиши ЗДЖЭ
         if (e.key === 'з' || e.key === 'З') dir = { x: 0, y: -1 };
         else if (e.key === 'ж' || e.key === 'Ж') dir = { x: 0, y: 1 };
         else if (e.key === 'д' || e.key === 'Д') dir = { x: -1, y: 0 };
         else if (e.key === 'э' || e.key === 'Э') dir = { x: 1, y: 0 };
+        // Английские клавиши PLÖÄ (или PL;')
+        else if (e.key === 'p' || e.key === 'P') dir = { x: 0, y: -1 };
+        else if (e.key === ';' || e.key === ':') dir = { x: 0, y: 1 };
+        else if (e.key === 'l' || e.key === 'L') dir = { x: -1, y: 0 };
+        else if (e.key === "'" || e.key === '"') dir = { x: 1, y: 0 };
       } else if (control === 'keyboard4') {
         if (e.key === 'ArrowUp') dir = { x: 0, y: -1 };
         else if (e.key === 'ArrowDown') dir = { x: 0, y: 1 };
@@ -2697,6 +2747,46 @@
     gamePaused = false;
     pauseMenu.classList.remove('active');
     resetGame();
+  }
+
+  // Функции полноэкранного режима
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+      // Входим в полноэкранный режим
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    } else {
+      // Выходим из полноэкранного режима
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  }
+
+  function updateFullscreenButton() {
+    if (document.fullscreenElement || document.webkitFullscreenElement || 
+        document.mozFullScreenElement || document.msFullscreenElement) {
+      fullscreenBtn.textContent = '⛶';
+      fullscreenBtn.title = 'Выйти из полноэкранного режима (C)';
+    } else {
+      fullscreenBtn.textContent = '⛶';
+      fullscreenBtn.title = 'Полноэкранный режим (C)';
+    }
   }
 
   // Обновление и анимация
@@ -2899,9 +2989,11 @@
     controlsScreen.style.display = 'none';
     gameContainer.style.display = 'block';
 
-    // Показываем кнопку паузы
+    // Показываем кнопки управления игрой
     pauseBtn.style.display = 'block';
     pauseBtn.textContent = '⏸';
+    fullscreenBtn.style.display = 'block';
+    updateFullscreenButton();
 
     resizeCanvas();
 
@@ -3022,8 +3114,9 @@
     gameRunning = false;
     gamePaused = false;
 
-    // Скрываем кнопку паузы
+    // Скрываем кнопки управления игрой
     pauseBtn.style.display = 'none';
+    fullscreenBtn.style.display = 'none';
 
     // Очистка всех таймеров
     if (foodTimer) {
@@ -3388,8 +3481,27 @@
     resumeBtn.addEventListener('click', resumeGame);
     mainMenuBtn.addEventListener('click', returnToMainMenu);
 
+    // Обработчик для кнопки полноэкранного режима
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    // Обработчик изменения полноэкранного режима
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
     // Обработчик клавиш для паузы и навигации
     document.addEventListener('keydown', (e) => {
+      // Полноэкранный режим (клавиша C или С)
+      if (e.key === 'c' || e.key === 'C' || e.key === 'с' || e.key === 'С') {
+        // Проверяем, что это не ввод в поле (если такие будут)
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          toggleFullscreen();
+          return;
+        }
+      }
+
       // Пауза во время игры
       if (gameRunning && !gamePaused) {
         if (e.key === 'Escape' || e.key === 'ё' || e.key === 'Ё' || e.key === '`' || e.key === '~') {
