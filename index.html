@@ -162,6 +162,10 @@
       box-shadow: 0 0 0 2px #00C853, 0 0 15px var(--purple-glow), 0 0 25px var(--green-glow);
       border-color: #00C853;
     }
+    .mode-btn:focus, .mode-btn:focus-visible {
+      outline: 3px solid #00FF7F;
+      outline-offset: 2px;
+    }
     .ghost-container {
       position: relative;
     }
@@ -276,6 +280,10 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 12px var(--purple-glow), 0 0 35px var(--green-glow);
     }
+    .custom-select-button:focus, .custom-select-button:focus-visible {
+      outline: 3px solid #00FF7F;
+      outline-offset: 2px;
+    }
     /* Стили для списка опций */
     .custom-select-options {
       position: absolute;
@@ -313,11 +321,17 @@
       font-size: 14px;
       font-family: 'Exo 2', sans-serif;
       text-align: center;
+      border: 1px solid transparent;
     }
     .custom-select-option:hover {
       background: linear-gradient(135deg, rgba(67, 97, 238, 0.9), rgba(0, 200, 83, 0.6));
       transform: translateX(3px);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .custom-select-option:focus, .custom-select-option:focus-visible {
+      outline: 2px solid #00FF7F;
+      outline-offset: 1px;
+      border-color: #00FF7F;
     }
     /* Анимация для градиентной границы кастомных списков */
     @keyframes borderGlowCustom {
@@ -455,6 +469,10 @@
     }
     button.secondary:hover {
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+    button:focus, button:focus-visible {
+      outline: 3px solid #00FF7F;
+      outline-offset: 3px;
     }
     #game-container {
       position: relative;
@@ -880,6 +898,10 @@
     }
     .pause-menu-btn:active {
       transform: translateY(1px);
+    }
+    .pause-menu-btn:focus, .pause-menu-btn:focus-visible {
+      outline: 3px solid #00FF7F;
+      outline-offset: 3px;
     }
     .pause-menu-btn.secondary {
       background: linear-gradient(45deg, #495057, #343a40);
@@ -2648,6 +2670,11 @@
     gamePaused = true;
     pauseMenu.classList.add('active');
     pauseBtn.textContent = '▶';
+    
+    // Устанавливаем фокус на кнопку "Продолжить"
+    setTimeout(() => {
+      resumeBtn.focus();
+    }, 100);
   }
 
   function resumeGame() {
@@ -3155,6 +3182,14 @@
         button.dataset.value = option.dataset.value;
         updatePlayerControlsVisibility();
       });
+      
+      // Обработка Enter для выбора опции
+      option.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          option.click();
+        }
+      });
     });
 
     // Обработка событий для выбора количества ботов
@@ -3167,6 +3202,14 @@
         const button = botCountContainer.querySelector('.custom-select-button');
         button.textContent = option.textContent;
         button.dataset.value = option.dataset.value;
+      });
+      
+      // Обработка Enter для выбора опции
+      option.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          option.click();
+        }
       });
     });
 
@@ -3183,6 +3226,14 @@
           const button = container.querySelector('.custom-select-button');
           button.textContent = option.textContent;
           button.dataset.value = option.dataset.value;
+        });
+        
+        // Обработка Enter для выбора опции
+        option.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            option.click();
+          }
         });
       });
     }
@@ -3217,6 +3268,14 @@
         updateModeIndicator();
       });
 
+      // Обработка Enter для выбора режима
+      button.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          button.click();
+        }
+      });
+
       // Показ описания при наведении
       button.addEventListener('mouseover', () => {
         if (button.dataset.mode !== 'ghost-main') {
@@ -3246,6 +3305,14 @@
         gameMode = button.dataset.mode;
         updateSelectedModeDisplay();
         updateModeIndicator();
+      });
+
+      // Обработка Enter для выбора подрежима
+      button.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          button.click();
+        }
       });
 
       // Показ описания при наведении
@@ -3321,11 +3388,68 @@
     resumeBtn.addEventListener('click', resumeGame);
     mainMenuBtn.addEventListener('click', returnToMainMenu);
 
-    // Обработчик клавиши Escape для паузы
+    // Обработчик клавиш для паузы и навигации
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && gameRunning) {
-        togglePause();
+      // Пауза во время игры
+      if (gameRunning && !gamePaused) {
+        if (e.key === 'Escape' || e.key === 'ё' || e.key === 'Ё' || e.key === '`' || e.key === '~') {
+          e.preventDefault();
+          togglePause();
+          return;
+        }
       }
+
+      // Возобновление игры из меню паузы
+      if (gameRunning && gamePaused) {
+        if (e.key === 'Escape' || e.key === 'ё' || e.key === 'Ё' || e.key === '`' || e.key === '~') {
+          e.preventDefault();
+          togglePause();
+          return;
+        }
+      }
+
+      // Навигация в меню паузы с помощью Enter
+      if (gamePaused && e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement === resumeBtn || activeElement === mainMenuBtn) {
+          e.preventDefault();
+          activeElement.click();
+        }
+      }
+
+      // Навигация на экранах настроек с помощью Enter
+      if (!gameRunning) {
+        if (e.key === 'Enter') {
+          const activeElement = document.activeElement;
+          
+          // Проверяем, является ли активный элемент кнопкой
+          if (activeElement.tagName === 'BUTTON') {
+            e.preventDefault();
+            activeElement.click();
+          }
+          
+          // Проверяем, является ли активный элемент опцией в выпадающем списке
+          if (activeElement.classList.contains('custom-select-option')) {
+            e.preventDefault();
+            activeElement.click();
+          }
+          
+          // Проверяем, является ли активный элемент кнопкой режима
+          if (activeElement.classList.contains('mode-btn') || activeElement.classList.contains('submode-btn')) {
+            e.preventDefault();
+            activeElement.click();
+          }
+        }
+      }
+    });
+
+    // Делаем кнопки и опции фокусируемыми
+    document.querySelectorAll('.custom-select-option').forEach(option => {
+      option.setAttribute('tabindex', '0');
+    });
+
+    document.querySelectorAll('.mode-btn, .submode-btn').forEach(btn => {
+      btn.setAttribute('tabindex', '0');
     });
   }
 
