@@ -1154,6 +1154,13 @@
   <div id="setup-screen">
     <h2>Настройте игру</h2>
     <div class="selection-row">
+      <label>Режим:</label>
+      <div class="mode-selector">
+        <button class="mode-btn active" data-game-type="local">Локальная игра</button>
+        <button class="mode-btn" data-game-type="multiplayer">Мультиплеер</button>
+      </div>
+    </div>
+    <div class="selection-row" id="local-players-row">
       <label for="human-players">Игроков (1–4):</label>
       <div class="custom-select-container" id="human-players-container">
         <button class="custom-select-button" data-value="1">1</button>
@@ -1164,6 +1171,10 @@
           <div class="custom-select-option" data-value="4">4</div>
         </div>
       </div>
+    </div>
+    <div class="selection-row" id="multiplayer-server-row" style="display: none;">
+      <label for="server-url">Сервер:</label>
+      <input type="text" id="server-url" value="ws://localhost:8765" style="padding: 8px; border-radius: 8px; border: 1px solid rgba(124, 77, 255, 0.5); background: rgba(0, 0, 0, 0.3); color: white; font-family: 'Exo 2', sans-serif; width: 200px;">
     </div>
     <div class="selection-row">
       <label for="bot-count">Ботов (0–7):</label>
@@ -1354,6 +1365,12 @@
   const mainMenuBtn = document.getElementById('main-menu-btn');
   const fullscreenBtn = document.getElementById('fullscreen-btn');
 
+  // Переменные для мультиплеера
+  let ws = null;
+  let isMultiplayer = false;
+  let myPlayerId = null;
+  let remotePlayers = {};
+
   const gridSize = 20;
   const tileCountX = 60; // 1200 / 20
   const tileCountY = 30; // 600 / 20
@@ -1434,6 +1451,129 @@
   ];
 
   // ФУНКЦИИ ИНИЦИАЛИЗАЦИИ И УПРАВЛЕНИЯ
+
+  // Функции мультиплеера
+  function connectToServer(serverUrl) {
+    return new Promise((resolve, reject) => {
+      try {
+        ws = new WebSocket(serverUrl);
+        
+        ws.onopen = () => {
+          console.log('Подключено к серверу');
+          // Отправляем запрос на присоединение
+          ws.send(JSON.stringify({
+            type: 'join',
+            player_id: myPlayerId || Date.now().toString(),
+            name: `Игрок ${Math.floor(Math.random() * 1000)}`
+          }));
+        };
+        
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          handleServerMessage(data);
+        };
+        
+        ws.onerror = (error) => {
+          console.error('Ошибка WebSocket:', error);
+          errorMsg.textContent = 'Ошибка подключения к серверу';
+          reject(error);
+        };
+        
+        ws.onclose = () => {
+          console.log('Отключено от сервера');
+          if (isMultiplayer && gameRunning) {
+            errorMsg.textContent = 'Соединение с сервером потеряно';
+            endGame();
+          }
+          ws = null;
+        };
+        
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+  
+  function handleServerMessage(data) {
+    switch (data.type) {
+      case 'joined':
+        myPlayerId = data.player_id;
+        console.log('Присоединились как игрок:', myPlayerId);
+        // Синхронизируем состояние игры
+        if (data.game_state && data.game_state.players) {
+          remotePlayers = data.game_state.players;
+        }
+        break;
+        
+      case 'player_joined':
+        console.log('Новый игрок присоединился:', data.player_id);
+        remotePlayers[data.player_id] = data.player;
+        break;
+        
+      case 'player_left':
+        console.log('Игрок покинул игру:', data.player_id);
+        delete remotePlayers[data.player_id];
+        break;
+        
+      case 'player_update':
+        // Обновляем позицию удаленного игрока
+        if (data.player_id !== myPlayerId && remotePlayers[data.player_id]) {
+          Object.assign(remotePlayers[data.player_id], data.data);
+        }
+        break;
+        
+      case 'player_action':
+        // Обрабатываем действия других игроков
+        if (data.player_id !== myPlayerId) {
+          handleRemotePlayerAction(data.player_id, data.action, data.data);
+        }
+        break;
+        
+      case 'chat':
+        console.log(`Чат от ${data.player_id}: ${data.message}`);
+        break;
+    }
+  }
+  
+  function handleRemotePlayerAction(playerId, action, data) {
+    // Обработка действий удаленных игроков (выстрелы, смена направления и т.д.)
+    console.log(`Действие от ${playerId}:`, action, data);
+  }
+  
+  function sendPlayerUpdate() {
+    if (!ws || !isMultiplayer || !myPlayerId || !gameRunning) return;
+    
+    // Находим индекс нашего игрока
+    const myIndex = snakes.findIndex((snake, idx) => 
+      snake !== null && playerTypes[idx] === 'human'
+    );
+    
+    if (myIndex === -1 || !snakes[myIndex]) return;
+    
+    const head = snakes[myIndex][0];
+    
+    ws.send(JSON.stringify({
+      type: 'update',
+      data: {
+        x: head.x,
+        y: head.y,
+        score: scores[myIndex],
+        direction: directions[myIndex],
+        length: snakes[myIndex].length
+      }
+    }));
+  }
+  
+  function sendPlayerAction(action, data = {}) {
+    if (!ws || !isMultiplayer || !myPlayerId) return;
+    
+    ws.send(JSON.stringify({
+      type: 'action',
+      action: action,
+      data: data
+    }));
+  }
 
   // Инициализация звёздного фона
   function createStarField() {
@@ -2256,6 +2396,15 @@
     if (navigator.vibrate) {
       navigator.vibrate(50);
     }
+    
+    // Отправляем действие в мультиплеере
+    if (isMultiplayer && playerTypes[playerIndex] === 'human') {
+      sendPlayerAction('shoot', {
+        x: head.x,
+        y: head.y,
+        direction: direction
+      });
+    }
   }
 
   function updateBullets() {
@@ -2894,6 +3043,11 @@
       if (dir && canChangeDirection(directions[i], dir)) {
         directions[i] = dir;
 
+        // Отправляем изменение направления в мультиплеере
+        if (isMultiplayer) {
+          sendPlayerAction('change_direction', { direction: dir });
+        }
+
         // Вибрация для тактильной обратной связи
         if (navigator.vibrate && isMobile) {
           navigator.vibrate(20);
@@ -2951,6 +3105,11 @@
 
     if (dir && canChangeDirection(directions[currentTouchPlayer], dir)) {
       directions[currentTouchPlayer] = dir;
+
+      // Отправляем изменение направления в мультиплеере
+      if (isMultiplayer) {
+        sendPlayerAction('change_direction', { direction: dir });
+      }
 
       // Вибрация для обратной связи
       if (navigator.vibrate) {
@@ -3040,6 +3199,11 @@
   // Обновление и анимация
   function update() {
     if (!gameRunning || gamePaused) return;
+
+    // Отправляем обновление позиции в мультиплеере
+    if (isMultiplayer) {
+      sendPlayerUpdate();
+    }
 
     // Ограничения на максимальное количество объектов
     if (particles.length > MAX_PARTICLES) {
@@ -3362,6 +3526,16 @@
     gameRunning = false;
     gamePaused = false;
 
+    // Закрываем WebSocket соединение
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    
+    isMultiplayer = false;
+    myPlayerId = null;
+    remotePlayers = {};
+
     // Скрываем кнопку паузы
     pauseBtn.style.display = 'none';
 
@@ -3448,6 +3622,11 @@
 
   // Валидация перед началом игры
   function validateAndStart() {
+    // В режиме мультиплеера валидация не требуется
+    if (isMultiplayer) {
+      return true;
+    }
+    
     const humans = parseInt(document.querySelector('#human-players-container .custom-select-button').dataset.value);
     const bots = parseInt(document.querySelector('#bot-count-container .custom-select-button').dataset.value);
     const total = humans + bots;
@@ -3589,10 +3768,41 @@
 
   // Инициализация обработчиков событий
   function initEventListeners() {
+    // Обработка переключения между локальной игрой и мультиплеером
+    document.querySelectorAll('[data-game-type]').forEach(button => {
+      button.addEventListener('click', () => {
+        // Снимаем активность со всех кнопок типа игры
+        document.querySelectorAll('[data-game-type]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        button.classList.add('active');
+        
+        const gameType = button.dataset.gameType;
+        isMultiplayer = (gameType === 'multiplayer');
+        
+        // Показываем/скрываем соответствующие элементы
+        const localPlayersRow = document.getElementById('local-players-row');
+        const multiplayerServerRow = document.getElementById('multiplayer-server-row');
+        const botCountRow = document.querySelector('.selection-row:has(#bot-count-container)');
+        
+        if (isMultiplayer) {
+          localPlayersRow.style.display = 'none';
+          multiplayerServerRow.style.display = 'flex';
+          if (botCountRow) botCountRow.style.display = 'none';
+        } else {
+          localPlayersRow.style.display = 'flex';
+          multiplayerServerRow.style.display = 'none';
+          if (botCountRow) botCountRow.style.display = 'flex';
+        }
+      });
+    });
+    
     // Обработка кнопок режимов игры
     document.querySelectorAll('.mode-btn').forEach(button => {
       button.addEventListener('click', () => {
         if (button.dataset.mode === 'ghost-main') return;
+        if (button.dataset.gameType) return; // Пропускаем кнопки типа игры
 
         // Снимаем активность со всех кнопок
         document.querySelectorAll('.mode-btn, .submode-btn').forEach(btn => {
@@ -3725,29 +3935,57 @@
       }, 300);
     });
 
-    startBtn.addEventListener('click', () => {
-      humanCount = parseInt(document.querySelector('#human-players-container .custom-select-button').dataset.value);
-      const botCount = parseInt(document.querySelector('#bot-count-container .custom-select-button').dataset.value);
+    startBtn.addEventListener('click', async () => {
+      if (isMultiplayer) {
+        // Мультиплеер режим
+        const serverUrl = document.getElementById('server-url').value;
+        
+        if (!serverUrl) {
+          errorMsg.textContent = 'Введите адрес сервера';
+          errorMsg.style.animation = 'pulseError 0.5s';
+          setTimeout(() => { errorMsg.style.animation = ''; }, 500);
+          return;
+        }
+        
+        try {
+          errorMsg.textContent = 'Подключение к серверу...';
+          await connectToServer(serverUrl);
+          errorMsg.textContent = '';
+          
+          humanCount = 1; // В мультиплеере только один локальный игрок
+          playerControls = ['keyboard1'];
+          
+          startGame(1, 0);
+        } catch (error) {
+          errorMsg.textContent = 'Не удалось подключиться к серверу';
+          errorMsg.style.animation = 'pulseError 0.5s';
+          setTimeout(() => { errorMsg.style.animation = ''; }, 500);
+        }
+      } else {
+        // Локальная игра
+        humanCount = parseInt(document.querySelector('#human-players-container .custom-select-button').dataset.value);
+        const botCount = parseInt(document.querySelector('#bot-count-container .custom-select-button').dataset.value);
 
-      if (!validateAndStart()) return;
+        if (!validateAndStart()) return;
 
-      playerControls = [];
-      for (let i = 0; i < humanCount; i++) {
-        playerControls.push(document.querySelector(`#control-${i}-container .custom-select-button`).dataset.value);
-      }
+        playerControls = [];
+        for (let i = 0; i < humanCount; i++) {
+          playerControls.push(document.querySelector(`#control-${i}-container .custom-select-button`).dataset.value);
+        }
 
-      if (!isMobile) {
-        for (let i = 0; i < playerControls.length; i++) {
-          if (playerControls[i] === 'swipe') {
-            errorMsg.textContent = `Игрок ${i + 1} выбрал свайпы, но устройство не сенсорное. Выберите клавиатуру.`;
-            errorMsg.style.animation = 'pulseError 0.5s';
-            setTimeout(() => { errorMsg.style.animation = ''; }, 500);
-            return;
+        if (!isMobile) {
+          for (let i = 0; i < playerControls.length; i++) {
+            if (playerControls[i] === 'swipe') {
+              errorMsg.textContent = `Игрок ${i + 1} выбрал свайпы, но устройство не сенсорное. Выберите клавиатуру.`;
+              errorMsg.style.animation = 'pulseError 0.5s';
+              setTimeout(() => { errorMsg.style.animation = ''; }, 500);
+              return;
+            }
           }
         }
-      }
 
-      startGame(humanCount, botCount);
+        startGame(humanCount, botCount);
+      }
     });
 
     // Обработчик изменения количества игроков
