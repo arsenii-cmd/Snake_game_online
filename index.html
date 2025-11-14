@@ -3871,7 +3871,7 @@
     }
     
     // Вычисляем позицию стрелки относительно курсора
-    const arrowLeftPos = e.clientX - left;
+    const arrowLeftPos = e.clientX - left-200;
     const arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
     
     // Применяем позиционирование
