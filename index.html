@@ -3843,8 +3843,8 @@
     const descHeight = description.offsetHeight;
     
     // Используем clientX/clientY для позиции относительно viewport
-    let left = e.clientX - descWidth / 2;
-    let top = e.clientY + offset;
+    let left = e.clientX - descWidth / 2-200;
+    let top = e.clientY + offset+100;
     let showAbove = false;
     
     // Проверяем, не выходит ли за нижний край
