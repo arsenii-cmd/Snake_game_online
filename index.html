@@ -3844,7 +3844,7 @@
     
     // Используем clientX/clientY для позиции относительно viewport
     let left = e.clientX - descWidth / 2-200;
-    let top = e.clientY + offset+100;
+    let top = e.clientY + offset+600;
     let showAbove = false;
     
     // Проверяем, не выходит ли за нижний край
@@ -3871,7 +3871,7 @@
     }
     
     // Вычисляем позицию стрелки относительно курсора
-    const arrowLeftPos = e.clientX - left-800;
+    const arrowLeftPos = e.clientX - left-1000;
     const arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
     
     // Применяем позиционирование
