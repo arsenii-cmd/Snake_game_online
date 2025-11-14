@@ -777,21 +777,21 @@
       }
       .mode-indicator {
         font-size: 10px;
-        padding: 2px 6px;
+        padding: 4px 8px;
         top: 5px;
         right: 5px;
       }
       .pause-btn {
         padding: 5px 8px;
         font-size: 14px;
-        top: 5px;
-        right: 5px;
+        top: 10px;
+        right: 10px;
       }
       .fullscreen-btn {
         padding: 5px 8px;
         font-size: 14px;
-        top: 5px;
-        left: 5px;
+        top: 10px;
+        left: 10px;
       }
       .mode-btn {
         padding: 6px 10px;
@@ -977,23 +977,36 @@
       100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
     }
     .mode-indicator {
-      position: absolute;
+      position: fixed;
       top: 10px;
       right: 10px;
-      background: rgba(30, 41, 59, 0.9);
-      padding: 4px 10px;
+      background: rgba(30, 41, 59, 0.95);
+      padding: 8px 16px;
       border-radius: 16px;
-      font-size: clamp(11px, 2vw, 13px);
-      z-index: 10;
-      border: 1px solid rgba(124, 77, 255, 0.5);
-      backdrop-filter: blur(4px);
+      font-size: clamp(13px, 2.5vw, 16px);
+      z-index: 1000;
+      border: 2px solid rgba(124, 77, 255, 0.7);
+      backdrop-filter: blur(8px);
       display: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 20px var(--purple-glow);
+      font-weight: 600;
+      animation: slideInFromRight 0.5s ease-out;
+    }
+    @keyframes slideInFromRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
     /* Стили для кнопки паузы */
     .pause-btn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 20px;
+      right: 20px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
       border-radius: 12px;
@@ -1019,8 +1032,8 @@
     /* Стили для кнопки полноэкранного режима */
     .fullscreen-btn {
       position: fixed;
-      top: 10px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
       border-radius: 12px;
@@ -2542,6 +2555,9 @@
   function updateModeIndicator() {
     if (!gameRunning) return;
 
+    // Всегда показываем индикатор режима
+    modeIndicator.style.display = 'block';
+
     if (gameMode === 'half-ghost' || gameMode === 'family-ghost') {
       // Проверяем, есть ли активные призраки
       let activeGhost = false;
@@ -2555,21 +2571,27 @@
 
       if (activeGhost) {
         modeIndicator.textContent = '👻 Режим призрака активен!';
-        modeIndicator.style.display = 'block';
         modeIndicator.style.backgroundColor = 'rgba(156, 39, 176, 0.9)';
       } else {
-        modeIndicator.style.display = 'none';
+        if (gameMode === 'half-ghost') {
+          modeIndicator.textContent = '👻 Полупризрак';
+        } else {
+          modeIndicator.textContent = '👻 Семейка недопризраков';
+        }
+        modeIndicator.style.backgroundColor = 'rgba(156, 39, 176, 0.7)';
       }
-    } else if (gameMode === 'full-ghost' || gameMode === 'all-ghosts') {
-      modeIndicator.textContent = '👻 Режим призрака';
-      modeIndicator.style.display = 'block';
+    } else if (gameMode === 'full-ghost') {
+      modeIndicator.textContent = '👻 Полноценный призрак';
+      modeIndicator.style.backgroundColor = 'rgba(156, 39, 176, 0.9)';
+    } else if (gameMode === 'all-ghosts') {
+      modeIndicator.textContent = '👻 Компашка призраков';
       modeIndicator.style.backgroundColor = 'rgba(156, 39, 176, 0.9)';
     } else if (gameMode === 'magic-shooter') {
       modeIndicator.textContent = '✨ Магический шутер';
-      modeIndicator.style.display = 'block';
       modeIndicator.style.backgroundColor = 'rgba(255, 215, 0, 0.9)';
-    } else {
-      modeIndicator.style.display = 'none';
+    } else if (gameMode === 'classic') {
+      modeIndicator.textContent = '🎮 Классический режим';
+      modeIndicator.style.backgroundColor = 'rgba(0, 200, 83, 0.9)';
     }
   }
 
