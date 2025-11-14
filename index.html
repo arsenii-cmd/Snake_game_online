@@ -801,6 +801,93 @@
       backdrop-filter: blur(4px);
       display: none;
     }
+    /* Стили для кнопки паузы */
+    .pause-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 2px solid rgba(124, 77, 255, 0.5);
+      border-radius: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 15;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+      display: none;
+      font-size: 20px;
+      color: white;
+      user-select: none;
+    }
+    .pause-btn:hover {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(124, 77, 255, 0.8);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(124, 77, 255, 0.6);
+    }
+    .pause-btn:active {
+      transform: scale(0.95);
+    }
+    /* Меню паузы */
+    .pause-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      animation: fadeIn 0.3s ease;
+    }
+    .pause-menu.active {
+      display: flex;
+    }
+    .pause-menu h2 {
+      color: #00FF7F;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 0 0 20px rgba(0, 255, 127, 0.8);
+    }
+    .pause-menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    .pause-menu-btn {
+      padding: 12px 40px;
+      font-size: 18px;
+      background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+      color: white;
+      border: 2px solid rgba(0, 200, 83, 0.5);
+      border-radius: 60px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-family: 'Exo 2', sans-serif;
+      box-shadow: 0 6px 15px var(--purple-glow);
+      min-width: 200px;
+    }
+    .pause-menu-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px var(--purple-glow), 0 0 35px var(--green-glow);
+      border-color: #00FF7F;
+    }
+    .pause-menu-btn:active {
+      transform: translateY(1px);
+    }
+    .pause-menu-btn.secondary {
+      background: linear-gradient(45deg, #495057, #343a40);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    }
+    .pause-menu-btn.secondary:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
     .effect-indicator {
       position: absolute;
       bottom: 20px;
@@ -828,6 +915,7 @@
   <div class="floating-bg" id="floating-bg"></div>
   <h1>Змейка — до 8 участников</h1>
   <div class="mode-indicator" id="mode-indicator"></div>
+  <button class="pause-btn" id="pause-btn">⏸</button>
   <div id="setup-screen">
     <h2>Настройте игру</h2>
     <div class="selection-row">
@@ -993,6 +1081,13 @@
         <button onclick="resetGame()"><span>Играть снова</span></button>
       </div>
     </div>
+    <div class="pause-menu" id="pause-menu">
+      <h2>Пауза</h2>
+      <div class="pause-menu-buttons">
+        <button class="pause-menu-btn" id="resume-btn"><span>Продолжить</span></button>
+        <button class="pause-menu-btn secondary" id="main-menu-btn"><span>Главное меню</span></button>
+      </div>
+    </div>
   </div>
   <div id="scores"></div>
   <div id="legend"></div>
@@ -1015,6 +1110,10 @@
   const finalScoresDiv = document.getElementById('final-scores');
   const selectedModeDisplay = document.getElementById('selected-mode-display');
   const modeIndicator = document.getElementById('mode-indicator');
+  const pauseBtn = document.getElementById('pause-btn');
+  const pauseMenu = document.getElementById('pause-menu');
+  const resumeBtn = document.getElementById('resume-btn');
+  const mainMenuBtn = document.getElementById('main-menu-btn');
 
   const gridSize = 20;
   const tileCountX = 60; // 1200 / 20
@@ -1040,6 +1139,7 @@
   let foods = [];
   let particles = [];
   let gameRunning = false;
+  let gamePaused = false;
   let foodTimer = null;
   let totalPlayers = 0;
   let humanCount = 0;
@@ -2542,9 +2642,39 @@
     e.preventDefault();
   }
 
+  // Функции паузы
+  function pauseGame() {
+    if (!gameRunning || gamePaused) return;
+    gamePaused = true;
+    pauseMenu.classList.add('active');
+    pauseBtn.textContent = '▶';
+  }
+
+  function resumeGame() {
+    if (!gameRunning || !gamePaused) return;
+    gamePaused = false;
+    pauseMenu.classList.remove('active');
+    pauseBtn.textContent = '⏸';
+    gameSpeed.lastUpdateTime = 0; // Сбрасываем таймер чтобы избежать скачка
+  }
+
+  function togglePause() {
+    if (gamePaused) {
+      resumeGame();
+    } else {
+      pauseGame();
+    }
+  }
+
+  function returnToMainMenu() {
+    gamePaused = false;
+    pauseMenu.classList.remove('active');
+    resetGame();
+  }
+
   // Обновление и анимация
   function update() {
-    if (!gameRunning) return;
+    if (!gameRunning || gamePaused) return;
 
     // Ограничения на максимальное количество объектов
     if (particles.length > MAX_PARTICLES) {
@@ -2742,6 +2872,10 @@
     controlsScreen.style.display = 'none';
     gameContainer.style.display = 'block';
 
+    // Показываем кнопку паузы
+    pauseBtn.style.display = 'block';
+    pauseBtn.textContent = '⏸';
+
     resizeCanvas();
 
     // Инициализация всех массивов
@@ -2839,13 +2973,18 @@
   function gameFrame(timestamp) {
     if (!gameRunning) return;
 
-    if (!gameSpeed.lastUpdateTime) gameSpeed.lastUpdateTime = timestamp;
+    if (!gamePaused) {
+      if (!gameSpeed.lastUpdateTime) gameSpeed.lastUpdateTime = timestamp;
 
-    const elapsed = timestamp - gameSpeed.lastUpdateTime;
+      const elapsed = timestamp - gameSpeed.lastUpdateTime;
 
-    if (elapsed >= gameSpeed.updateInterval) {
-      gameLoop();
-      gameSpeed.lastUpdateTime = timestamp;
+      if (elapsed >= gameSpeed.updateInterval) {
+        gameLoop();
+        gameSpeed.lastUpdateTime = timestamp;
+      }
+    } else {
+      // Если игра на паузе, продолжаем рисовать, но не обновляем логику
+      draw();
     }
 
     requestAnimationFrame(gameFrame);
@@ -2854,6 +2993,10 @@
   // Сброс игры
   function resetGame() {
     gameRunning = false;
+    gamePaused = false;
+
+    // Скрываем кнопку паузы
+    pauseBtn.style.display = 'none';
 
     // Очистка всех таймеров
     if (foodTimer) {
@@ -3172,6 +3315,18 @@
     if (humanPlayersContainer) {
       humanPlayersContainer.addEventListener('click', updatePlayerControlsVisibility);
     }
+
+    // Обработчики для кнопки паузы
+    pauseBtn.addEventListener('click', togglePause);
+    resumeBtn.addEventListener('click', resumeGame);
+    mainMenuBtn.addEventListener('click', returnToMainMenu);
+
+    // Обработчик клавиши Escape для паузы
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && gameRunning) {
+        togglePause();
+      }
+    });
   }
 
   // Отображение описания режима
