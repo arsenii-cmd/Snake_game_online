@@ -88,15 +88,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
+      gap: clamp(12px, 2vh, 20px);
       text-align: center;
       background: var(--card-bg);
-      padding: 24px;
+      padding: clamp(16px, 3vw, 24px);
       border-radius: 20px;
-      width: 96%;
+      width: calc(100% - 24px);
       max-width: 720px;
       max-height: calc(100vh - 80px);
       overflow-y: auto;
+      overflow-x: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 20px var(--purple-glow), 0 0 40px var(--green-glow);
       backdrop-filter: blur(10px);
       border: 2px solid transparent;
@@ -121,14 +122,15 @@
     }
     .selection-row {
       display: flex;
-      gap: 12px;
+      gap: clamp(8px, 2vw, 12px);
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
       background: rgba(0, 0, 0, 0.2);
-      padding: 10px 16px;
+      padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px);
       border-radius: 16px;
       width: 100%;
+      box-sizing: border-box;
     }
     /* Стили для выбора режима игры */
     .game-mode-selection {
@@ -139,13 +141,14 @@
     }
     .mode-selector {
       display: flex;
-      gap: 10px;
+      gap: clamp(8px, 2vw, 10px);
       position: relative;
       flex-wrap: wrap;
       justify-content: center;
+      width: 100%;
     }
     .mode-btn {
-      padding: 8px 14px;
+      padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 14px);
       background: linear-gradient(135deg, rgba(124, 77, 255, 0.6), rgba(156, 39, 176, 0.6));
       color: white;
       border: none;
@@ -154,8 +157,9 @@
       transition: all 0.3s ease;
       font-weight: 600;
       position: relative;
-      min-width: clamp(90px, 20vw, 100px);
+      min-width: clamp(80px, 18vw, 100px);
       text-align: center;
+      font-size: clamp(13px, 2.5vw, 15px);
       font-family: 'Exo 2', sans-serif;
       border: 1px solid rgba(124, 77, 255, 0.3);
       font-size: clamp(12px, 2.5vw, 14px);
@@ -265,7 +269,7 @@
     }
     /* Стили для кнопки */
     .custom-select-button {
-      padding: 8px 14px;
+      padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 14px);
       background: linear-gradient(135deg, rgba(124, 77, 255, 0.6), rgba(156, 39, 176, 0.6));
       color: white;
       border: none;
@@ -276,7 +280,7 @@
       font-family: 'Exo 2', sans-serif;
       text-align: center;
       width: 100%;
-      max-width: 180px;
+      max-width: clamp(140px, 35vw, 180px);
       border: 1px solid rgba(124, 77, 255, 0.3);
       box-shadow: 0 4px 12px var(--purple-glow), 0 0 20px var(--green-glow);
       position: relative;
@@ -419,9 +423,9 @@
       100% { transform: scale(1); }
     }
     button {
-      margin-top: 10px;
-      padding: 14px 32px;
-      font-size: 18px;
+      margin-top: clamp(8px, 1.5vh, 10px);
+      padding: clamp(10px, 2vw, 14px) clamp(24px, 5vw, 32px);
+      font-size: clamp(14px, 3vw, 18px);
       background: linear-gradient(135deg, var(--primary-color), var(--success-color), var(--secondary-color));
       color: white;
       border: 2px solid rgba(0, 200, 83, 0.5);
@@ -622,14 +626,16 @@
       margin: 8px 0;
     }
     .instructions {
-      margin-top: 15px;
-      padding: 12px;
+      margin-top: clamp(10px, 2vh, 15px);
+      padding: clamp(10px, 2vw, 12px);
       background: rgba(30, 41, 59, 0.7);
       border-radius: 16px;
+      width: 100%;
       max-width: 500px;
       font-size: clamp(12px, 2.5vw, 14px);
       text-align: center;
       border: 1px solid rgba(76, 175, 80, 0.3);
+      box-sizing: border-box;
     }
     .instructions p {
       margin: 6px 0;
@@ -677,19 +683,20 @@
     }
     .selected-mode-display {
       display: flex;
-      gap: 10px;
+      gap: clamp(8px, 2vw, 10px);
       align-items: center;
       background: linear-gradient(135deg, rgba(124, 77, 255, 0.15), rgba(0, 200, 83, 0.15));
-      padding: 12px 20px;
+      padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px);
       border-radius: 12px;
       width: 100%;
       font-weight: 600;
-      font-size: 15px;
+      font-size: clamp(13px, 2.5vw, 15px);
       border: 2px solid transparent;
       background-image: linear-gradient(135deg, rgba(124, 77, 255, 0.15), rgba(0, 200, 83, 0.15)),
                         linear-gradient(135deg, #7C4DFF, #00C853);
       background-origin: border-box;
       background-clip: padding-box, border-box;
+      box-sizing: border-box;
     }
     .selected-mode-display span.mode-name {
       color: #00FF7F;
@@ -766,14 +773,17 @@
         top: 5px;
         right: 5px;
       }
-      .pause-btn, .fullscreen-btn {
+      .pause-btn {
+        padding: 5px 8px;
+        font-size: 14px;
+        top: 5px;
+        right: 5px;
+      }
+      .fullscreen-btn {
         padding: 5px 8px;
         font-size: 14px;
         top: 5px;
         left: 5px;
-      }
-      .fullscreen-btn {
-        bottom: 5px;
       }
       .mode-btn {
         padding: 6px 10px;
@@ -990,7 +1000,7 @@
     .pause-btn {
       position: absolute;
       top: 10px;
-      left: 10px;
+      right: 10px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
       border-radius: 12px;
@@ -1016,7 +1026,7 @@
     /* Стили для кнопки полноэкранного режима */
     .fullscreen-btn {
       position: absolute;
-      bottom: 10px;
+      top: 10px;
       left: 10px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
