@@ -253,7 +253,14 @@
       height: 0;
       border-left: 8px solid transparent;
       border-right: 8px solid transparent;
+    }
+    .mode-description.arrow-up::before {
       border-bottom: 8px solid rgba(13, 27, 42, 0.95);
+      border-top: none;
+    }
+    .mode-description.arrow-down::before {
+      border-top: 8px solid rgba(13, 27, 42, 0.95);
+      border-bottom: none;
     }
     .description-content h3 {
       color: #00FF7F;
@@ -3843,8 +3850,8 @@
     const descHeight = description.offsetHeight;
     
     // Используем clientX/clientY для позиции относительно viewport
-    let left = e.clientX - descWidth / 2-200;
-    let top = e.clientY + offset+400;
+    let left = e.clientX - descWidth / 2;
+    let top = e.clientY + offset;
     let showAbove = false;
     
     // Проверяем, не выходит ли за нижний край
@@ -3871,25 +3878,26 @@
     }
     
     // Вычисляем позицию стрелки относительно курсора
-    const arrowLeftPos = e.clientX - left-1100;
+    const arrowLeftPos = e.clientX - left;
     const arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
     
     // Применяем позиционирование
-    description.style.left = left + 'px';
+    description.style.left = left + 'px'-130;
     description.style.top = top + 'px';
     
     // Обновляем позицию и направление стрелки
     description.style.setProperty('--arrow-left', arrowLeft);
     
     if (showAbove) {
-      // Стрелка внизу, указывает вниз
+      // Окно над курсором - стрелка внизу, указывает вниз
+      description.classList.remove('arrow-up');
+      description.classList.add('arrow-down');
       description.style.setProperty('--arrow-top', 'auto');
       description.style.setProperty('--arrow-bottom', (-arrowSize) + 'px');
-      // Меняем направление стрелки
-      description.style.borderBottom = 'none';
-      description.style.borderTop = arrowSize + 'px solid rgba(13, 27, 42, 0.95)';
     } else {
-      // Стрелка вверху, указывает вверх
+      // Окно под курсором - стрелка вверху, указывает вверх
+      description.classList.remove('arrow-down');
+      description.classList.add('arrow-up');
       description.style.setProperty('--arrow-top', (-arrowSize) + 'px');
       description.style.setProperty('--arrow-bottom', 'auto');
     }
