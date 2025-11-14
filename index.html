@@ -3593,12 +3593,24 @@
           showDescription(button.dataset.mode);
         }
       });
+
+      // Скрытие описания при уходе курсора
+      button.addEventListener('mouseout', () => {
+        if (button.dataset.mode !== 'ghost-main') {
+          document.querySelector('.mode-description').style.display = 'none';
+        }
+      });
     });
 
     // Обработка наведения на "Призрак" для показа подменю
-    document.querySelector('[data-mode="ghost-main"]').addEventListener('mouseover', () => {
+    const ghostMainBtn = document.querySelector('[data-mode="ghost-main"]');
+    ghostMainBtn.addEventListener('mouseover', () => {
       showDescription('ghost-main');
       document.querySelector('.mode-description').style.display = 'block';
+    });
+
+    ghostMainBtn.addEventListener('mouseout', () => {
+      document.querySelector('.mode-description').style.display = 'none';
     });
 
     // Обработка кнопок подрежимов
@@ -3629,6 +3641,11 @@
       // Показ описания при наведении
       button.addEventListener('mouseover', () => {
         showDescription(button.dataset.mode);
+      });
+
+      // Скрытие описания при уходе курсора
+      button.addEventListener('mouseout', () => {
+        document.querySelector('.mode-description').style.display = 'none';
       });
     });
 
