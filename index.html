@@ -219,17 +219,19 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     .mode-description {
-      position: absolute;
-      left: 100%;
-      top: 0;
-      width: 320px;
+      position: fixed;
+      left: auto;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: clamp(280px, 30vw, 320px);
+      max-width: calc(100vw - 40px);
       background: rgba(13, 27, 42, 0.95);
       padding: 16px;
       border-radius: 16px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      z-index: 15;
+      z-index: 1000;
       display: none;
-      margin-left: 15px;
       border: 1px solid rgba(121, 82, 179, 0.4);
       font-size: 14px;
       animation: fadeIn 0.2s ease;
@@ -246,13 +248,14 @@
     .mode-description::before {
       content: '';
       position: absolute;
-      left: -8px;
-      top: 18px;
+      left: 50%;
+      top: -8px;
+      transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-      border-right: 8px solid rgba(13, 27, 42, 0.95);
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 8px solid rgba(13, 27, 42, 0.95);
     }
     .description-content h3 {
       color: #00FF7F;
@@ -865,24 +868,9 @@
     @media (max-width: 768px) {
       h1 { font-size: clamp(1.5em, 4vw, 1.9em); }
       .mode-description {
-        left: auto;
-        right: 0;
-        top: auto;
-        bottom: 100%;
-        margin-left: 0;
-        margin-bottom: 15px;
-        width: 300px;
+        width: clamp(260px, 80vw, 300px);
         font-size: 13px;
-      }
-      .mode-description::before {
-        top: auto;
-        bottom: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-top: 8px solid rgba(13, 27, 42, 0.95);
-        border-right: 8px solid transparent;
-        border-left: 8px solid transparent;
-        border-bottom: none;
+        right: 10px;
       }
       #setup-screen, #controls-screen { padding: 16px; gap: 12px; }
       button { font-size: clamp(14px, 3vw, 16px); padding: 10px 20px; }
@@ -1025,7 +1013,7 @@
     }
     /* Стили для кнопки полноэкранного режима */
     .fullscreen-btn {
-      position: absolute;
+      position: fixed;
       top: 10px;
       left: 10px;
       background: rgba(30, 41, 59, 0.7);
@@ -1033,10 +1021,10 @@
       border-radius: 12px;
       padding: 8px 12px;
       cursor: pointer;
-      z-index: 15;
+      z-index: 100;
       backdrop-filter: blur(8px);
       transition: all 0.3s ease;
-      display: none;
+      display: block;
       font-size: clamp(16px, 3vw, 20px);
       color: white;
       user-select: none;
@@ -2589,11 +2577,15 @@
       if (scores[i] > 0 || (playerTypes[i] === 'human' && i < humanCount)) {
         const name = playerTypes[i] === 'bot' ? `Бот ${i - humanCount + 1}` : `Игрок ${i + 1}`;
         const scoreEl = document.createElement('div');
+        const isDead = snakes[i] === null;
 
         // Добавляем индикатор цвета для игрока
         const indicator = document.createElement('span');
         indicator.className = 'player-indicator';
         indicator.style.backgroundColor = colors[i].head;
+        if (isDead) {
+          indicator.style.opacity = '0.5';
+        }
 
         // Добавляем индикатор призрака, если игрок находится в режиме призрака
         let ghostIndicator = '';
@@ -2601,10 +2593,21 @@
           ghostIndicator = '<span class="ghost-indicator"></span>';
         }
 
-        scoreEl.innerHTML = `${indicator.outerHTML} ${name}: <strong>${scores[i]}</strong>${ghostIndicator}`;
+        // Добавляем индикатор смерти
+        let deathIndicator = '';
+        if (isDead) {
+          deathIndicator = ' <span style="color: #f72585; font-size: 16px;" title="Мёртв">💀</span>';
+        }
+
+        scoreEl.innerHTML = `${indicator.outerHTML} ${name}: <strong>${scores[i]}</strong>${ghostIndicator}${deathIndicator}`;
+        
+        if (isDead) {
+          scoreEl.style.opacity = '0.7';
+          scoreEl.style.textDecoration = 'line-through';
+        }
 
         // Добавляем индикатор эффекта в режиме магического шутера
-        if (gameMode === 'magic-shooter' && specialEffectTypes[i] !== null) {
+        if (gameMode === 'magic-shooter' && specialEffectTypes[i] !== null && !isDead) {
           const effectIcon = document.createElement('span');
           effectIcon.style.marginLeft = '5px';
           effectIcon.style.fontSize = '16px';
@@ -2632,9 +2635,16 @@
         const colorBox = document.createElement('div');
         colorBox.className = 'legend-color';
         colorBox.style.backgroundColor = colors[i].head;
+        if (isDead) {
+          colorBox.style.opacity = '0.5';
+        }
 
         const label = document.createElement('span');
         label.textContent = name;
+        if (isDead) {
+          label.style.opacity = '0.7';
+          label.style.textDecoration = 'line-through';
+        }
 
         const item = document.createElement('div');
         item.className = 'legend-item';
@@ -3200,11 +3210,9 @@
     controlsScreen.style.display = 'none';
     gameContainer.style.display = 'block';
 
-    // Показываем кнопки управления игрой
+    // Показываем кнопку паузы
     pauseBtn.style.display = 'block';
     pauseBtn.textContent = '⏸';
-    fullscreenBtn.style.display = 'block';
-    updateFullscreenButton();
 
     resizeCanvas();
 
@@ -3325,9 +3333,8 @@
     gameRunning = false;
     gamePaused = false;
 
-    // Скрываем кнопки управления игрой
+    // Скрываем кнопку паузы
     pauseBtn.style.display = 'none';
-    fullscreenBtn.style.display = 'none';
 
     // Очистка всех таймеров
     if (foodTimer) {
@@ -3807,6 +3814,9 @@
 
     // Обновление видимости элементов управления
     updatePlayerControlsVisibility();
+
+    // Инициализация кнопки полноэкранного режима
+    updateFullscreenButton();
 
     // Анимация появления начального экрана
     setTimeout(() => {
