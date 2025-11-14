@@ -784,13 +784,13 @@
       .pause-btn {
         padding: 5px 8px;
         font-size: 14px;
-        top: 10px;
-        right: 10px;
+        top: 150px;
+        right: 100px;
       }
       .fullscreen-btn {
         padding: 5px 8px;
         font-size: 14px;
-        top: 10px;
+        top: 150px;
         left: 10px;
       }
       .mode-btn {
@@ -1005,7 +1005,7 @@
     /* Стили для кнопки паузы */
     .pause-btn {
       position: absolute;
-      top: 20px;
+      top: 50px;
       right: 20px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
@@ -1032,7 +1032,7 @@
     /* Стили для кнопки полноэкранного режима */
     .fullscreen-btn {
       position: fixed;
-      top: 20px;
+      top: 50px;
       left: 20px;
       background: rgba(30, 41, 59, 0.7);
       border: 2px solid rgba(124, 77, 255, 0.5);
@@ -3312,7 +3312,6 @@
     // Синхронизация очков
     syncScoreWithSnakeLength();
     updateScoreDisplay();
-    updateModeIndicator();
 
     // Генерация первого яблока
     generateFood();
@@ -3324,6 +3323,9 @@
 
     gameRunning = true;
     setupControls();
+    
+    // Показываем индикатор режима после запуска игры
+    updateModeIndicator();
 
     // Запуск автоматической стрельбы для режима "Магический шутер"
     if (gameMode === 'magic-shooter') {
