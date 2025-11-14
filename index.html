@@ -3832,57 +3832,67 @@
   // Позиционирование описания около курсора мыши
   function positionDescriptionNearMouse(e) {
     const description = document.querySelector('.mode-description');
-    const arrow = description.querySelector('::before') || description;
+    if (!description || description.style.display === 'none') return;
     
-    const offset = 8; // Отступ от курсора (уменьшен для близости)
+    const offset = 15; // Отступ от курсора
     const arrowSize = 8;
+    const padding = 20; // Отступ от краев экрана
     
     // Получаем размеры окна описания
     const descWidth = description.offsetWidth;
     const descHeight = description.offsetHeight;
     
-    // Вычисляем позицию (под курсором по умолчанию)
+    // Используем clientX/clientY для позиции относительно viewport
     let left = e.clientX - descWidth / 2;
     let top = e.clientY + offset;
+    let showAbove = false;
     
-    // Позиция стрелки (по центру сверху)
-    let arrowLeft = '50%';
-    let arrowTop = -arrowSize + 'px';
-    let arrowTransform = 'translateX(-50%)';
+    // Проверяем, не выходит ли за нижний край
+    if (top + descHeight > window.innerHeight - padding) {
+      // Показываем над курсором
+      top = e.clientY - descHeight - offset;
+      showAbove = true;
+    }
     
     // Проверяем, не выходит ли за правый край
-    if (left + descWidth > window.innerWidth - 20) {
-      left = window.innerWidth - descWidth - 20;
+    if (left + descWidth > window.innerWidth - padding) {
+      left = window.innerWidth - descWidth - padding;
     }
     
     // Проверяем, не выходит ли за левый край
-    if (left < 20) {
-      left = 20;
+    if (left < padding) {
+      left = padding;
     }
     
-    // Проверяем, не выходит ли за нижний край
-    if (top + descHeight > window.innerHeight - 20) {
-      // Показываем над курсором
-      top = e.clientY - descHeight - offset;
-      arrowTop = 'auto';
-      description.style.setProperty('--arrow-bottom', -arrowSize + 'px');
-      description.style.setProperty('--arrow-border', 'border-top: ' + arrowSize + 'px solid rgba(13, 27, 42, 0.95)');
-    } else {
-      description.style.setProperty('--arrow-bottom', 'auto');
-      description.style.setProperty('--arrow-border', 'border-bottom: ' + arrowSize + 'px solid rgba(13, 27, 42, 0.95)');
+    // Проверяем, не выходит ли за верхний край
+    if (top < padding) {
+      top = padding;
+      showAbove = false;
     }
     
     // Вычисляем позицию стрелки относительно курсора
     const arrowLeftPos = e.clientX - left;
-    arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
+    const arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
     
     // Применяем позиционирование
     description.style.left = left + 'px';
     description.style.top = top + 'px';
     
-    // Обновляем позицию стрелки через CSS переменные
+    // Обновляем позицию и направление стрелки
     description.style.setProperty('--arrow-left', arrowLeft);
-    description.style.setProperty('--arrow-top', arrowTop);
+    
+    if (showAbove) {
+      // Стрелка внизу, указывает вниз
+      description.style.setProperty('--arrow-top', 'auto');
+      description.style.setProperty('--arrow-bottom', (-arrowSize) + 'px');
+      // Меняем направление стрелки
+      description.style.borderBottom = 'none';
+      description.style.borderTop = arrowSize + 'px solid rgba(13, 27, 42, 0.95)';
+    } else {
+      // Стрелка вверху, указывает вверх
+      description.style.setProperty('--arrow-top', (-arrowSize) + 'px');
+      description.style.setProperty('--arrow-bottom', 'auto');
+    }
   }
 
   // Инициализация при загрузке
