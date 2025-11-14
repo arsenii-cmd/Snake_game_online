@@ -221,10 +221,6 @@
     }
     .mode-description {
       position: fixed;
-      left: auto;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
       width: clamp(280px, 30vw, 320px);
       max-width: calc(100vw - 40px);
       background: rgba(13, 27, 42, 0.95);
@@ -235,10 +231,10 @@
       display: none;
       border: 1px solid rgba(121, 82, 179, 0.4);
       font-size: 14px;
-      animation: fadeIn 0.2s ease;
       backdrop-filter: blur(10px);
       color: #e9ecef;
       pointer-events: none;
+      transition: none;
     }
     .description-content {
       display: none;
@@ -249,8 +245,9 @@
     .mode-description::before {
       content: '';
       position: absolute;
-      left: 50%;
-      top: -8px;
+      left: var(--arrow-left, 50%);
+      top: var(--arrow-top, -8px);
+      bottom: var(--arrow-bottom, auto);
       transform: translateX(-50%);
       width: 0;
       height: 0;
@@ -3595,6 +3592,13 @@
         }
       });
 
+      // Отслеживание движения мыши для позиционирования описания
+      button.addEventListener('mousemove', (e) => {
+        if (button.dataset.mode !== 'ghost-main') {
+          positionDescriptionNearMouse(e);
+        }
+      });
+
       // Скрытие описания при уходе курсора
       button.addEventListener('mouseout', () => {
         if (button.dataset.mode !== 'ghost-main') {
@@ -3608,6 +3612,10 @@
     ghostMainBtn.addEventListener('mouseover', () => {
       showDescription('ghost-main');
       document.querySelector('.mode-description').style.display = 'block';
+    });
+
+    ghostMainBtn.addEventListener('mousemove', (e) => {
+      positionDescriptionNearMouse(e);
     });
 
     ghostMainBtn.addEventListener('mouseout', () => {
@@ -3642,6 +3650,11 @@
       // Показ описания при наведении
       button.addEventListener('mouseover', () => {
         showDescription(button.dataset.mode);
+      });
+
+      // Отслеживание движения мыши для позиционирования описания
+      button.addEventListener('mousemove', (e) => {
+        positionDescriptionNearMouse(e);
       });
 
       // Скрытие описания при уходе курсора
@@ -3814,6 +3827,62 @@
       targetDescription.classList.add('active');
       document.querySelector('.mode-description').style.display = 'block';
     }
+  }
+
+  // Позиционирование описания около курсора мыши
+  function positionDescriptionNearMouse(e) {
+    const description = document.querySelector('.mode-description');
+    const arrow = description.querySelector('::before') || description;
+    
+    const offset = 20; // Отступ от курсора
+    const arrowSize = 8;
+    
+    // Получаем размеры окна описания
+    const descWidth = description.offsetWidth;
+    const descHeight = description.offsetHeight;
+    
+    // Вычисляем позицию (под курсором по умолчанию)
+    let left = e.clientX - descWidth / 2;
+    let top = e.clientY + offset;
+    
+    // Позиция стрелки (по центру сверху)
+    let arrowLeft = '50%';
+    let arrowTop = -arrowSize + 'px';
+    let arrowTransform = 'translateX(-50%)';
+    
+    // Проверяем, не выходит ли за правый край
+    if (left + descWidth > window.innerWidth - 20) {
+      left = window.innerWidth - descWidth - 20;
+    }
+    
+    // Проверяем, не выходит ли за левый край
+    if (left < 20) {
+      left = 20;
+    }
+    
+    // Проверяем, не выходит ли за нижний край
+    if (top + descHeight > window.innerHeight - 20) {
+      // Показываем над курсором
+      top = e.clientY - descHeight - offset;
+      arrowTop = 'auto';
+      description.style.setProperty('--arrow-bottom', -arrowSize + 'px');
+      description.style.setProperty('--arrow-border', 'border-top: ' + arrowSize + 'px solid rgba(13, 27, 42, 0.95)');
+    } else {
+      description.style.setProperty('--arrow-bottom', 'auto');
+      description.style.setProperty('--arrow-border', 'border-bottom: ' + arrowSize + 'px solid rgba(13, 27, 42, 0.95)');
+    }
+    
+    // Вычисляем позицию стрелки относительно курсора
+    const arrowLeftPos = e.clientX - left;
+    arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
+    
+    // Применяем позиционирование
+    description.style.left = left + 'px';
+    description.style.top = top + 'px';
+    
+    // Обновляем позицию стрелки через CSS переменные
+    description.style.setProperty('--arrow-left', arrowLeft);
+    description.style.setProperty('--arrow-top', arrowTop);
   }
 
   // Инициализация при загрузке
