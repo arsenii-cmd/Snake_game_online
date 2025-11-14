@@ -10,7 +10,7 @@ game_state = {
     "started": False
 }
 
-async def handle_client(websocket, path):
+async def handle_client(websocket):
     player_id = None
     try:
         print(f"[{datetime.now()}] Новое подключение")

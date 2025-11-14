@@ -1243,6 +1243,8 @@
       <span class="mode-name" id="selected-mode-display">Классика</span>
     </div>
     <div id="error-message"></div>
+    <button id="multiplayer-btn" style="background: linear-gradient(135deg, #4361ee, #3a0ca3); margin-top: 5px;"><span>🌐 Мультиплеер (бета)</span></button>
+    <div id="multiplayer-status" style="font-size: 12px; color: #adb5bd; min-height: 18px; margin: 5px 0;"></div>
     <button id="start-controls-btn"><span>Настроить управление</span></button>
     <div class="instructions">
       <p>До 8 змеек могут соревноваться одновременно!</p>
@@ -3914,6 +3916,35 @@
       modeDescription.style.display = 'none';
     });
 
+    // Обработчик кнопки мультиплеера
+    const multiplayerBtn = document.getElementById('multiplayer-btn');
+    const multiplayerStatus = document.getElementById('multiplayer-status');
+    
+    multiplayerBtn.addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        multiplayerStatus.textContent = 'Подключение к серверу...';
+        multiplayerStatus.style.color = '#ffd60a';
+        connectToServer();
+        
+        setTimeout(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            multiplayerStatus.textContent = '✓ Подключено к серверу';
+            multiplayerStatus.style.color = '#00c853';
+            multiplayerBtn.innerHTML = '<span>🌐 Отключиться</span>';
+          } else {
+            multiplayerStatus.textContent = '✗ Не удалось подключиться';
+            multiplayerStatus.style.color = '#f72585';
+          }
+        }, 1000);
+      } else {
+        ws.close();
+        isMultiplayer = false;
+        multiplayerStatus.textContent = 'Отключено';
+        multiplayerStatus.style.color = '#adb5bd';
+        multiplayerBtn.innerHTML = '<span>🌐 Мультиплеер (бета)</span>';
+      }
+    });
+
     // Обработчики кнопок навигации
     startControlsBtn.addEventListener('click', () => {
       if (!validateAndStart()) return;
@@ -4163,6 +4194,94 @@
       description.style.setProperty('--arrow-top', (-arrowSize) + 'px');
       description.style.setProperty('--arrow-bottom', 'auto');
     }
+  }
+
+  // Функции для работы с WebSocket
+  function connectToServer() {
+    try {
+      ws = new WebSocket('ws://localhost:8765');
+      
+      ws.onopen = () => {
+        console.log('Подключено к серверу');
+        isMultiplayer = true;
+        
+        // Отправляем запрос на подключение
+        ws.send(JSON.stringify({
+          type: 'join',
+          player_id: 'player_' + Date.now(),
+          name: 'Игрок ' + Math.floor(Math.random() * 1000)
+        }));
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleServerMessage(data);
+      };
+      
+      ws.onerror = (error) => {
+        console.error('Ошибка WebSocket:', error);
+        isMultiplayer = false;
+      };
+      
+      ws.onclose = () => {
+        console.log('Отключено от сервера');
+        isMultiplayer = false;
+        ws = null;
+      };
+    } catch (error) {
+      console.error('Не удалось подключиться к серверу:', error);
+      isMultiplayer = false;
+    }
+  }
+  
+  function handleServerMessage(data) {
+    switch (data.type) {
+      case 'joined':
+        myPlayerId = data.player_id;
+        console.log('Присоединились как:', myPlayerId);
+        break;
+        
+      case 'player_joined':
+        console.log('Новый игрок:', data.player_id);
+        remotePlayers[data.player_id] = data.player;
+        break;
+        
+      case 'player_left':
+        console.log('Игрок вышел:', data.player_id);
+        delete remotePlayers[data.player_id];
+        break;
+        
+      case 'player_update':
+        if (remotePlayers[data.player_id]) {
+          Object.assign(remotePlayers[data.player_id], data.data);
+        }
+        break;
+        
+      case 'player_action':
+        console.log('Действие игрока:', data.player_id, data.action);
+        break;
+        
+      case 'chat':
+        console.log('Чат:', data.player_id, data.message);
+        break;
+    }
+  }
+  
+  function sendGameUpdate(playerIndex) {
+    if (!ws || ws.readyState !== WebSocket.OPEN || !isMultiplayer) return;
+    
+    const snake = snakes[playerIndex];
+    if (!snake) return;
+    
+    ws.send(JSON.stringify({
+      type: 'update',
+      data: {
+        x: snake[0].x,
+        y: snake[0].y,
+        score: scores[playerIndex],
+        direction: directions[playerIndex]
+      }
+    }));
   }
 
   // Инициализация при загрузке
