@@ -1,9 +1,21 @@
-# Скачайте cloudflared с https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
-# Или через winget:
-winget install --id Cloudflare.cloudflared
+Использование CloudPub
+Установка:
 
+# Скачайте клиент с https://cloudpub.ru/
+# После установки он будет доступен как cloudpub.exe
+Запуск туннеля для WebSocket сервера:
 
-cloudflared tunnel --url http://localhost:8000
+cloudpub http 8765
+Запуск туннеля для HTTP сервера (опционально):
 
+cloudpub http 8000
+CloudPub автоматически поддерживает WebSocket через HTTP туннель!
 
-cloudflared tunnel --url ws://localhost:8765
+Быстрый старт:
+
+Установите CloudPub с https://cloudpub.ru/
+Запустите start_with_cloudpub.bat (серверы уже запущены, так что можете пропустить)
+В новом окне PowerShell выполните:
+cloudpub http 8765
+Скопируйте URL который выдаст CloudPub (например: https://abc123.cloudpub.ru)
+В игре при создании/присоединении к комнате используйте этот URL
