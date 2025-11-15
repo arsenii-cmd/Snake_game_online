@@ -275,13 +275,13 @@
       position: fixed;
       width: clamp(280px, 30vw, 320px);
       max-width: calc(100vw - 40px);
-      background: rgba(13, 27, 42, 0.95);
+      background: rgba(13, 27, 42, 0.98);
       padding: 16px;
       border-radius: 16px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
+      z-index: 9999;
       display: none;
-      border: 1px solid rgba(121, 82, 179, 0.4);
+      border: 2px solid rgba(124, 77, 255, 0.8);
       font-size: 14px;
       backdrop-filter: blur(10px);
       color: #e9ecef;
@@ -1270,36 +1270,6 @@
           </div>
         </div>
         <button class="mode-btn" data-mode="magic-shooter">Магический шутер</button>
-        <div class="mode-description">
-          <div class="description-content active" data-mode="classic">
-            <h3>Классический режим</h3>
-            <p>Стандартные правила змейки. Столкновение с хвостом или другими змейками приводит к проигрышу. Все участники полностью видны на поле.</p>
-          </div>
-          <div class="description-content" data-mode="ghost-main">
-            <h3>Режим "Призрак"</h3>
-            <p>В этом режиме змейки могут становиться невидимыми. Видны только головы с глазами. Наведите курсор на варианты ниже, чтобы выбрать конкретный режим.</p>
-          </div>
-          <div class="description-content" data-mode="half-ghost">
-            <h3>Полупризрак</h3>
-            <p>Случайным образом игроки становятся невидимыми на 5 секунд. Хвост призрака полностью невидим и не имеет хитбокса. Интервал между исчезаниями не меньше 5 секунд.</p>
-          </div>
-          <div class="description-content" data-mode="family-ghost">
-            <h3>Семейка недопризраков</h3>
-            <p>Все змейки (игроки и боты) могут становиться призраками. Хвост призрака невидим, но сохраняет хитбокс, то есть об него можно умереть.</p>
-          </div>
-          <div class="description-content" data-mode="full-ghost">
-            <h3>Полноценный призрак</h3>
-            <p>Игроки-люди являются призраками с начала игры. Хвост призрака невидим. Об хвост призрака может умереть только другой призрак.</p>
-          </div>
-          <div class="description-content" data-mode="all-ghosts">
-            <h3>Компашка призраков</h3>
-            <p>Все змейки являются призраками с начала игры. Хвосты невидимы, но сохраняют хитбоксы. Самый сложный режим — нужно запоминать положение невидимых хвостов.</p>
-          </div>
-          <div class="description-content" data-mode="magic-shooter">
-            <h3>Магический шутер</h3>
-            <p>С вероятностью 30% вместо обычного яблока появляется зачарованное, которое дает один из эффектов на 10 секунд: "Оружие" (40%) - автоматические выстрелы раз в секунду, "Неуязвимость" (40%) - игрок может проходить через другие змейки, "Диарея" (20%) - каждые 5 секунд игрок теряет по 1 клетке.</p>
-          </div>
-        </div>
       </div>
     </div>
     <div class="selected-mode-display">
@@ -4046,9 +4016,10 @@
       });
 
       // Показ описания при наведении
-      button.addEventListener('mouseover', () => {
+      button.addEventListener('mouseover', (e) => {
         if (button.dataset.mode !== 'ghost-main') {
           showDescription(button.dataset.mode);
+          positionDescriptionNearMouse(e);
         }
       });
 
@@ -4108,8 +4079,9 @@
       });
 
       // Показ описания при наведении
-      button.addEventListener('mouseover', () => {
+      button.addEventListener('mouseover', (e) => {
         showDescription(button.dataset.mode);
+        positionDescriptionNearMouse(e);
       });
 
       // Отслеживание движения мыши для позиционирования описания
@@ -4234,7 +4206,46 @@
         selectedMultiplayerMode = modeNames[button.dataset.mode] || 'Классика';
         document.getElementById('mp-selected-mode-display').textContent = selectedMultiplayerMode;
       });
+      
+      // Показ описания при наведении
+      button.addEventListener('mouseover', (e) => {
+        if (button.dataset.mode !== 'ghost-main') {
+          showDescription(button.dataset.mode);
+          positionDescriptionNearMouse(e);
+        }
+      });
+
+      // Отслеживание движения мыши для позиционирования описания
+      button.addEventListener('mousemove', (e) => {
+        if (button.dataset.mode !== 'ghost-main') {
+          positionDescriptionNearMouse(e);
+        }
+      });
+
+      // Скрытие описания при уходе курсора
+      button.addEventListener('mouseout', () => {
+        if (button.dataset.mode !== 'ghost-main') {
+          document.querySelector('.mode-description').style.display = 'none';
+        }
+      });
     });
+    
+    // Обработка наведения на "Призрак" для показа подменю в мультиплеере
+    const mpGhostMainBtn = document.querySelector('#create-room-screen [data-mode="ghost-main"]');
+    if (mpGhostMainBtn) {
+      mpGhostMainBtn.addEventListener('mouseover', () => {
+        showDescription('ghost-main');
+        document.querySelector('.mode-description').style.display = 'block';
+      });
+
+      mpGhostMainBtn.addEventListener('mousemove', (e) => {
+        positionDescriptionNearMouse(e);
+      });
+
+      mpGhostMainBtn.addEventListener('mouseout', () => {
+        document.querySelector('.mode-description').style.display = 'none';
+      });
+    }
     
     document.querySelectorAll('#create-room-screen .submode-btn').forEach(button => {
       button.addEventListener('click', () => {
@@ -4258,6 +4269,22 @@
         
         selectedMultiplayerMode = modeNames[button.dataset.mode] || 'Классика';
         document.getElementById('mp-selected-mode-display').textContent = selectedMultiplayerMode;
+      });
+      
+      // Показ описания при наведении на подрежимы
+      button.addEventListener('mouseover', (e) => {
+        showDescription(button.dataset.mode);
+        positionDescriptionNearMouse(e);
+      });
+
+      // Отслеживание движения мыши для позиционирования описания
+      button.addEventListener('mousemove', (e) => {
+        positionDescriptionNearMouse(e);
+      });
+
+      // Скрытие описания при уходе курсора
+      button.addEventListener('mouseout', () => {
+        document.querySelector('.mode-description').style.display = 'none';
       });
     });
     
@@ -4484,59 +4511,63 @@
 
     // Показываем нужное описание
     const targetDescription = document.querySelector(`.description-content[data-mode="${mode}"]`);
+    
     if (targetDescription) {
       targetDescription.classList.add('active');
-      document.querySelector('.mode-description').style.display = 'block';
+      const modeDesc = document.querySelector('.mode-description');
+      modeDesc.style.display = 'block';
     }
   }
 
   // Позиционирование описания около курсора мыши
   function positionDescriptionNearMouse(e) {
     const description = document.querySelector('.mode-description');
-    if (!description || description.style.display === 'none') return;
+    if (!description) return;
     
-    const offset = 15; // Отступ от курсора
+    const offsetAbove = 20; // Отступ над курсором
+    const offsetBelow = 15; // Отступ под курсором
     const arrowSize = 8;
-    const padding = 20; // Отступ от краев экрана
+    const padding = 10; // Отступ от краев экрана
     
     // Получаем размеры окна описания
     const descWidth = description.offsetWidth;
     const descHeight = description.offsetHeight;
     
-    // Используем clientX/clientY для позиции относительно viewport
-    let left = e.clientX - descWidth / 2;
-    let top = e.clientY + offset;
+    // ФИКСИРУЕМ окошко по центру экрана по горизонтали
+    let left = (window.innerWidth - descWidth) / 2;
+    
+    // Определяем, показывать над или под курсором
+    let top;
     let showAbove = false;
+    
+    // Пробуем показать над курсором
+    const topAbove = e.clientY - descHeight - offsetAbove;
+    
+    // Если помещается сверху, показываем сверху
+    if (topAbove >= padding) {
+      top = topAbove;
+      showAbove = true;
+    } else {
+      // Иначе показываем снизу
+      top = e.clientY + offsetBelow;
+      showAbove = false;
+    }
     
     // Проверяем, не выходит ли за нижний край
     if (top + descHeight > window.innerHeight - padding) {
-      // Показываем над курсором
-      top = e.clientY - descHeight - offset;
-      showAbove = true;
-    }
-    
-    // Проверяем, не выходит ли за правый край
-    if (left + descWidth > window.innerWidth - padding) {
-      left = window.innerWidth - descWidth - padding;
-    }
-    
-    // Проверяем, не выходит ли за левый край
-    if (left < padding) {
-      left = padding;
+      top = window.innerHeight - descHeight - padding;
     }
     
     // Проверяем, не выходит ли за верхний край
     if (top < padding) {
       top = padding;
-      showAbove = false;
     }
     
-    // Вычисляем позицию стрелки относительно курсора
-    const arrowLeftPos = e.clientX - left;
-    const arrowLeft = Math.max(20, Math.min(arrowLeftPos, descWidth - 20)) + 'px';
+    // Стрелка всегда по центру окошка (так как окно по центру экрана)
+    const arrowLeft = '50%';
     
     // Применяем позиционирование
-    description.style.left = (left - 130) + 'px';
+    description.style.left = left + 'px';
     description.style.top = top + 'px';
     
     // Обновляем позицию и направление стрелки
@@ -4939,5 +4970,37 @@
     }
   }, { passive: false });
   </script>
+  
+  <!-- Всплывающее окно с описанием режимов (вне setup-screen для избежания overflow) -->
+  <div class="mode-description">
+    <div class="description-content" data-mode="classic">
+      <h3>Классический режим</h3>
+      <p>Стандартные правила змейки. Столкновение с хвостом или другими змейками приводит к проигрышу. Все участники полностью видны на поле.</p>
+    </div>
+    <div class="description-content" data-mode="ghost-main">
+      <h3>Режим "Призрак"</h3>
+      <p>В этом режиме змейки могут становиться невидимыми. Видны только головы с глазами. Наведите курсор на варианты ниже, чтобы выбрать конкретный режим.</p>
+    </div>
+    <div class="description-content" data-mode="half-ghost">
+      <h3>Полупризрак</h3>
+      <p>Случайным образом игроки становятся невидимыми на 5 секунд. Хвост призрака полностью невидим и не имеет хитбокса. Интервал между исчезаниями не меньше 5 секунд.</p>
+    </div>
+    <div class="description-content" data-mode="family-ghost">
+      <h3>Семейка недопризраков</h3>
+      <p>Все змейки (игроки и боты) могут становиться призраками. Хвост призрака невидим, но сохраняет хитбокс, то есть об него можно умереть.</p>
+    </div>
+    <div class="description-content" data-mode="full-ghost">
+      <h3>Полноценный призрак</h3>
+      <p>Игроки-люди являются призраками с начала игры. Хвост призрака невидим. Об хвост призрака может умереть только другой призрак.</p>
+    </div>
+    <div class="description-content" data-mode="all-ghosts">
+      <h3>Компашка призраков</h3>
+      <p>Все змейки являются призраками с начала игры. Хвосты невидимы, но сохраняют хитбоксы. Самый сложный режим — нужно запоминать положение невидимых хвостов.</p>
+    </div>
+    <div class="description-content" data-mode="magic-shooter">
+      <h3>Магический шутер</h3>
+      <p>С вероятностью 30% вместо обычного яблока появляется зачарованное, которое дает один из эффектов на 10 секунд: "Оружие" (40%) - автоматические выстрелы раз в секунду, "Неуязвимость" (40%) - игрок может проходить через другие змейки, "Диарея" (20%) - каждые 5 секунд игрок теряет по 1 клетке.</p>
+    </div>
+  </div>
 </body>
 </html>
