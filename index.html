@@ -1359,6 +1359,22 @@
   <!-- Экран выбора: создать или присоединиться -->
   <div id="multiplayer-choice-screen" style="display: none;">
     <h2>Мультиплеер</h2>
+    
+    <!-- WebSocket Server URL (скрытые настройки) -->
+    <details style="margin: 10px 0;">
+      <summary style="cursor: pointer; font-size: 13px; color: #7c4dff; padding: 8px;">⚙️ Настройки сервера</summary>
+      <div style="margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #adb5bd;">WebSocket URL:</label>
+        <input type="text" id="ws-server-url" placeholder="ws://localhost:8765 или wss://your-server.cloudpub.ru" 
+               style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white; font-size: 12px;"
+               value="ws://localhost:8765">
+        <div style="font-size: 11px; color: #6c757d; margin-top: 5px;">
+          Для локальной игры: ws://localhost:8765<br>
+          Для публичной: wss://your-url.cloudpub.ru (из окна CloudPub WebSocket)
+        </div>
+      </div>
+    </details>
+    
     <div id="multiplayer-status" style="font-size: 14px; color: #adb5bd; min-height: 20px; margin: 10px 0;"></div>
     <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
       <button id="create-room-btn" style="min-width: 250px; padding: 15px 30px; background: linear-gradient(135deg, #00c853, #00a843);">
@@ -4138,6 +4154,13 @@
     const backFromJoinBtn = document.getElementById('back-from-join-btn');
     const startMultiplayerGameBtn = document.getElementById('start-multiplayer-game-btn');
     const leaveRoomBtn = document.getElementById('leave-room-btn');
+    const wsServerUrlInput = document.getElementById('ws-server-url');
+    
+    // Загружаем последний использованный URL сервера
+    const lastServerUrl = localStorage.getItem('lastServerUrl');
+    if (lastServerUrl) {
+      wsServerUrlInput.value = lastServerUrl;
+    }
     
     createRoomBtn.addEventListener('click', () => {
       showScreen(createRoomScreen);
@@ -4592,8 +4615,13 @@
   function connectToServer() {
     return new Promise((resolve, reject) => {
       try {
-        console.log('Попытка подключения к ws://localhost:8765...');
-        ws = new WebSocket('ws://localhost:8765');
+        const serverUrl = document.getElementById('ws-server-url').value.trim() || 'ws://localhost:8765';
+        console.log(`Попытка подключения к ${serverUrl}...`);
+        
+        // Сохраняем последний использованный URL
+        localStorage.setItem('lastServerUrl', serverUrl);
+        
+        ws = new WebSocket(serverUrl);
         
         ws.onopen = () => {
           console.log('✓ WebSocket подключен');
