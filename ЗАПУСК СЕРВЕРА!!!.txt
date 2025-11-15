@@ -1,0 +1,9 @@
+# Скачайте cloudflared с https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
+# Или через winget:
+winget install --id Cloudflare.cloudflared
+
+
+cloudflared tunnel --url http://localhost:8000
+
+
+cloudflared tunnel --url ws://localhost:8765
