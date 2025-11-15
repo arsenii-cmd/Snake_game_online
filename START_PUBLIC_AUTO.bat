@@ -5,6 +5,13 @@ echo ========================================
 echo   Snake Game - Public Server (AUTO)
 echo ========================================
 echo.
+echo Stopping old servers (if any)...
+taskkill /FI "WindowTitle eq WebSocket Server*" /F >nul 2>&1
+taskkill /FI "WindowTitle eq HTTP Server*" /F >nul 2>&1
+clo.exe stop >nul 2>&1
+taskkill /F /IM clo.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
 echo [1/4] Starting local servers...
 echo.
 

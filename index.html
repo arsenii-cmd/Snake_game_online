@@ -1376,13 +1376,25 @@
           <br>
           <strong>Публичная игра (через интернет):</strong><br>
           • Используйте START_PUBLIC_AUTO.bat<br>
-          • Вставьте URL: wss://your-url.cloudpub.ru
+          • Вставьте URL: wss://your-url.cloudpub.ru<br>
+          <br>
+          <div style="padding: 8px; background: rgba(255,193,7,0.15); border-left: 3px solid #ffc107; border-radius: 3px; margin-top: 8px;">
+            <strong style="color: #ffc107;">📱 На телефонах:</strong><br>
+            Появится окно "Подтвердите действие на..."<br>
+            Просто нажмите "OK" - это безопасно!
+          </div>
         </div>
       </div>
     </details>
     
     <div id="multiplayer-status" style="font-size: 14px; color: #adb5bd; min-height: 20px; margin: 10px 0;"></div>
-    <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
+    
+    <!-- Кнопка проверки подключения -->
+    <button id="test-connection-btn" style="padding: 10px 20px; background: rgba(124,77,255,0.3); border: 1px solid #7c4dff; margin-bottom: 10px;">
+      <span>🔌 Проверить подключение</span>
+    </button>
+    
+    <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 10px;">
       <button id="create-room-btn" style="min-width: 250px; padding: 15px 30px; background: linear-gradient(135deg, #00c853, #00a843);">
         <span>Создать комнату</span>
       </button>
@@ -4168,6 +4180,42 @@
       wsServerUrlInput.value = lastServerUrl;
     }
     
+    // Кнопка проверки подключения
+    const testConnectionBtn = document.getElementById('test-connection-btn');
+    testConnectionBtn.addEventListener('click', async () => {
+      const statusDiv = document.getElementById('multiplayer-status');
+      const serverUrl = document.getElementById('ws-server-url').value.trim() || 'ws://localhost:8765';
+      
+      statusDiv.textContent = `Проверка подключения к ${serverUrl}...`;
+      statusDiv.style.color = '#ffc107';
+      
+      try {
+        const testWs = new WebSocket(serverUrl);
+        
+        testWs.onopen = () => {
+          statusDiv.textContent = `✓ Подключение успешно! Сервер доступен.`;
+          statusDiv.style.color = '#00c853';
+          testWs.close();
+        };
+        
+        testWs.onerror = (error) => {
+          statusDiv.textContent = `✗ Ошибка подключения! Проверьте URL и сервер.`;
+          statusDiv.style.color = '#f72585';
+          console.error('Ошибка подключения:', error);
+        };
+        
+        testWs.onclose = (event) => {
+          if (event.code !== 1000) {
+            statusDiv.textContent = `✗ Не удалось подключиться. Код: ${event.code}`;
+            statusDiv.style.color = '#f72585';
+          }
+        };
+      } catch (error) {
+        statusDiv.textContent = `✗ Ошибка: ${error.message}`;
+        statusDiv.style.color = '#f72585';
+      }
+    });
+    
     createRoomBtn.addEventListener('click', () => {
       showScreen(createRoomScreen);
     });
@@ -4622,7 +4670,18 @@
     return new Promise((resolve, reject) => {
       try {
         const serverUrl = document.getElementById('ws-server-url').value.trim() || 'ws://localhost:8765';
+        
+        // Проверка правильности URL
+        if (!serverUrl.startsWith('ws://') && !serverUrl.startsWith('wss://')) {
+          const error = 'URL должен начинаться с ws:// или wss://';
+          console.error(error);
+          alert(`Ошибка: ${error}\n\nТекущий URL: ${serverUrl}`);
+          reject(new Error(error));
+          return;
+        }
+        
         console.log(`Попытка подключения к ${serverUrl}...`);
+        console.log(`Текущая страница: ${window.location.href}`);
         
         // Сохраняем последний использованный URL
         localStorage.setItem('lastServerUrl', serverUrl);
