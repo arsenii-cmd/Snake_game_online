@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+cd /d "%~dp0\.."
 cls
 echo ========================================
 echo   Snake Game - Local Network
@@ -9,17 +10,18 @@ echo.
 echo Stopping old servers (if any)...
 taskkill /FI "WindowTitle eq WebSocket Server*" /F >nul 2>&1
 taskkill /FI "WindowTitle eq HTTP Server*" /F >nul 2>&1
+taskkill /FI "WindowTitle eq Vite Dev*" /F >nul 2>&1
 timeout /t 1 /nobreak >nul
 
 echo Starting servers...
 echo.
 
 :: Start servers
-start "WebSocket Server" cmd /k "title WebSocket Server && python server.py"
+start "WebSocket Server" cmd /k "title WebSocket Server && cd /d "%~dp0\.." && python server.py"
 timeout /t 2 /nobreak >nul
 
-start "HTTP Server" cmd /k "title HTTP Server && python -m http.server 8000"
-timeout /t 2 /nobreak >nul
+start "Vite Dev Server" cmd /k "title Vite Dev Server && cd /d "%~dp0\.." && npm run dev"
+timeout /t 3 /nobreak >nul
 
 :: Get local IP address
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do set "LOCAL_IP=%%a"
@@ -37,11 +39,11 @@ echo   COPY THESE URLS:
 echo ========================================
 echo.
 echo FOR THIS COMPUTER:
-echo   http://localhost:8000/index.html
+echo   http://localhost:3000
 echo   WebSocket: ws://localhost:8765
 echo.
 echo FOR PHONES/TABLETS:
-echo   http://%LOCAL_IP%:8000/index.html
+echo   http://%LOCAL_IP%:3000
 echo   WebSocket: ws://%LOCAL_IP%:8765
 echo.
 echo ========================================
@@ -58,13 +60,13 @@ echo   HOW TO PLAY:
 echo ========================================
 echo.
 echo ON THIS COMPUTER:
-echo   1. Open: http://localhost:8000/index.html
+echo   1. Open: http://localhost:3000
 echo   2. Click Multiplayer
 echo   3. Test connection (should work)
 echo   4. Create or join room
 echo.
 echo ON OTHER DEVICES (same WiFi):
-echo   1. Open: http://%LOCAL_IP%:8000/index.html
+echo   1. Open: http://%LOCAL_IP%:3000
 echo   2. Click Multiplayer -^> Settings
 echo   3. Change to: ws://%LOCAL_IP%:8765
 echo   4. Click "Test Connection" button
@@ -79,6 +81,6 @@ pause >nul
 echo.
 echo Stopping servers...
 taskkill /FI "WindowTitle eq WebSocket Server*" /F >nul 2>&1
-taskkill /FI "WindowTitle eq HTTP Server*" /F >nul 2>&1
+taskkill /FI "WindowTitle eq Vite Dev*" /F >nul 2>&1
 echo Done!
 timeout /t 2 /nobreak >nul

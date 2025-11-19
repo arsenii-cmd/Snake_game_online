@@ -3,7 +3,16 @@ import websockets
 import json
 import random
 import string
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения
+load_dotenv()
+
+# Конфигурация из .env
+SERVER_HOST = os.getenv('SERVER_HOST', 'localhost')
+SERVER_PORT = int(os.getenv('SERVER_PORT', '8765'))
 
 # Хранилище комнат
 rooms = {}
@@ -47,7 +56,7 @@ async def handle_client(websocket):
                 room_code = generate_room_code()
                 player_id = data.get("player_id", f"player_{random.randint(1000, 9999)}")
                 player_name = data.get("name", f"Player_{player_id}")
-                game_mode = data.get("game_mode", "Классика")
+                game_mode = data.get("game_mode", "classic")
                 
                 rooms[room_code] = {
                     "host": player_id,
@@ -111,7 +120,7 @@ async def handle_client(websocket):
                     "room_code": room_code,
                     "player_id": player_id,
                     "host_id": room["host"],
-                    "game_mode": room.get("game_mode", "Классика"),
+                    "game_mode": room.get("game_mode", "classic"),
                     "players": {pid: {"name": p["name"]} for pid, p in room["players"].items()}
                 }))
                 
@@ -124,18 +133,33 @@ async def handle_client(websocket):
                 
                 print(f"[{datetime.now()}] Игрок {player_name} присоединился к комнате {room_code}")
             
-            elif msg_type == "update":
-                # Обновление состояния игрока
-                if room_code and room_code in rooms and player_id in rooms[room_code]["players"]:
-                    player_data = data.get("data", {})
-                    rooms[room_code]["players"][player_id]["data"] = player_data
+            elif msg_type == "game_state":
+                # Синхронизация состояния игры (от хоста)
+                if room_code and room_code in rooms:
+                    room = rooms[room_code]
+                    if player_id == room["host"]:
+                        game_state = data.get("state", {})
+                        
+                        # Рассылаем состояние всем кроме хоста
+                        await broadcast_to_room(room_code, {
+                            "type": "game_state_update",
+                            "state": game_state
+                        }, exclude=player_id)
+            
+            elif msg_type == "player_input":
+                # Ввод игрока (направление)
+                if room_code and room_code in rooms:
+                    direction = data.get("direction")
                     
-                    # Рассылаем обновление всем остальным в комнате
-                    await broadcast_to_room(room_code, {
-                        "type": "player_update",
-                        "player_id": player_id,
-                        "data": player_data
-                    }, exclude=player_id)
+                    # Отправляем хосту
+                    room = rooms[room_code]
+                    host = room["players"].get(room["host"])
+                    if host:
+                        await host["websocket"].send(json.dumps({
+                            "type": "remote_input",
+                            "player_id": player_id,
+                            "direction": direction
+                        }))
             
             elif msg_type == "start_game":
                 # Начало игры (только хост)
@@ -144,7 +168,7 @@ async def handle_client(websocket):
                     if player_id == room["host"]:
                         room["started"] = True
                         
-                        # Отправляем всем игрокам информацию о начале игры и список всех игроков
+                        # Отправляем всем игрокам информацию о начале игры
                         players_list = []
                         for pid, pdata in room["players"].items():
                             players_list.append({
@@ -156,28 +180,24 @@ async def handle_client(websocket):
                         await broadcast_to_room(room_code, {
                             "type": "game_started",
                             "players": players_list,
-                            "game_mode": room.get("game_mode", "Классика")
+                            "game_mode": room.get("game_mode", "classic")
                         })
                         print(f"[{datetime.now()}] Игра началась в комнате {room_code} с {len(players_list)} игроками")
             
-            elif msg_type == "action":
-                # Игровое действие
-                if room_code:
-                    await broadcast_to_room(room_code, {
-                        "type": "player_action",
-                        "player_id": player_id,
-                        "action": data.get("action"),
-                        "data": data.get("data", {})
-                    }, exclude=player_id)
-            
-            elif msg_type == "chat":
-                # Чат-сообщение
-                if room_code:
-                    await broadcast_to_room(room_code, {
-                        "type": "chat",
-                        "player_id": player_id,
-                        "message": data.get("message")
-                    })
+            elif msg_type == "game_over":
+                # Окончание игры
+                if room_code and room_code in rooms:
+                    room = rooms[room_code]
+                    if player_id == room["host"]:
+                        final_scores = data.get("scores", [])
+                        
+                        await broadcast_to_room(room_code, {
+                            "type": "game_over",
+                            "scores": final_scores
+                        })
+                        
+                        room["started"] = False
+                        print(f"[{datetime.now()}] Игра завершена в комнате {room_code}")
     
     except websockets.exceptions.ConnectionClosed:
         print(f"[{datetime.now()}] Соединение закрыто")
@@ -207,11 +227,8 @@ async def handle_client(websocket):
                     print(f"[{datetime.now()}] Комната {room_code} удалена (пустая)")
 
 async def main():
-    host = "localhost"
-    port = 8765
-    
-    print(f"Запуск сервера на ws://{host}:{port}")
-    async with websockets.serve(handle_client, host, port):
+    print(f"🚀 Запуск сервера на ws://{SERVER_HOST}:{SERVER_PORT}")
+    async with websockets.serve(handle_client, SERVER_HOST, SERVER_PORT):
         await asyncio.Future()  # Работает бесконечно
 
 if __name__ == "__main__":
