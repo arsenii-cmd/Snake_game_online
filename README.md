@@ -2,7 +2,7 @@
 
 Классическая игра "Змейка" с поддержкой до 8 игроков на современном стеке: **Canvas + React + TypeScript**
 
-![Версия](https://img.shields.io/badge/версия-2.0-green)
+![Версия](https://img.shields.io/badge/версия-0.9.0-yellow)
 ![React](https://img.shields.io/badge/react-18.2-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.3-blue)
 
